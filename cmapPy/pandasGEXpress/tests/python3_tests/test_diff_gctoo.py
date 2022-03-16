@@ -1,3 +1,4 @@
+from calendar import c
 import unittest
 import logging
 import pandas as pd
@@ -15,7 +16,8 @@ test_col_meta = pd.DataFrame(
                    'trt_cp', 'ctl_vehicle', 'ctl_vehicle'],
      'pert_iname': ['bort', 'bort', 'DMSO', 'DMSO', 'bort', 'bort']},
     index=['A', 'B', 'C', 'D', 'E', 'F'])
-test_gctoo = GCToo.GCToo(data_df=test_mat,
+test_gctoo = GCToo.GCToo(meth_df=test_mat,
+                         cov_df = test_mat, 
                          col_metadata_df=test_col_meta)
 
 

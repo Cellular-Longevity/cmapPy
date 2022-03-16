@@ -19,7 +19,7 @@ class TestSubsetGCToo(unittest.TestCase):
                                        index=["a", "b", "c", "d"], columns=["rhd1", "rh2"])
         col_metadata_df = pd.DataFrame([["cm1", "cm2"], ["cm3", "cm4"], ["cm5", "cm6"]],
                                        index=["e", "f", "g"], columns=["chd1", "chd2"])
-        cls.in_gct = GCToo.GCToo(data_df, row_metadata_df, col_metadata_df)
+        cls.in_gct = GCToo.GCToo(data_df, data_df, row_metadata_df, col_metadata_df)
 
     def test_subset_gctoo(self):
 
@@ -41,7 +41,7 @@ class TestSubsetGCToo(unittest.TestCase):
         # happy path
         out_g = sg.subset_gctoo(self.in_gct, rid=["d", "a", "b"], cidx=[0],
                                exclude_rid=["a"])
-        pd.util.testing.assert_frame_equal(out_g.data_df, self.in_gct.data_df.iloc[[1, 3], [0]])
+        pd.util.testing.assert_frame_equal(out_g.meth_df, self.in_gct.meth_df.iloc[[1, 3], [0]])
 
     def test_get_rows_to_keep(self):
 

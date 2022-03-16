@@ -11,6 +11,8 @@ __email__ = "oana@broadinstitute.org"
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
+import sys
+sys.exit('RANDOM_SLICE NOT IMPLEMENTED FOR METHYLATION MATRICES YET')
 
 def make_specified_size_gctoo(og_gctoo, num_entries, dim):
     """
@@ -50,6 +52,6 @@ def make_specified_size_gctoo(og_gctoo, num_entries, dim):
         "after slice - new_col_meta.shape: {}  new_row_meta.shape:  {}".format(new_col_meta.shape, new_row_meta.shape))
 
     # make & return new gctoo instance
-    new_gctoo = GCToo.GCToo(data_df=new_data_df, row_metadata_df=new_row_meta, col_metadata_df=new_col_meta)
+    new_gctoo = GCToo.GCToo(meth_df=new_data_df, row_metadata_df=new_row_meta, col_metadata_df=new_col_meta)
 
     return new_gctoo

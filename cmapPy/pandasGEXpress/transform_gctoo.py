@@ -14,7 +14,8 @@ logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
 def transpose(my_gctoo):
     new_gctoo = GCToo.GCToo(
-        data_df=my_gctoo.data_df.T,
+        meth_df=my_gctoo.meth_df.T,
+        cov_df=my_gctoo.cov_df.T,
         row_metadata_df=my_gctoo.col_metadata_df,
         col_metadata_df=my_gctoo.row_metadata_df
     )

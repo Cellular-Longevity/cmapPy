@@ -16,7 +16,7 @@ version_attr = "version"
 version_number = "GCTX1.0"
 
 
-def write(gctoo_object, out_file_name, convert_back_to_neg_666=True, gzip_compression_level=6,
+def write(gctoo_object, out_file_name, convert_back_to_neg_666=False, gzip_compression_level=6,
     max_chunk_kb=1024, matrix_dtype=numpy.float32):
     """
 	Writes a GCToo instance to specified file.
@@ -43,10 +43,12 @@ def write(gctoo_object, out_file_name, convert_back_to_neg_666=True, gzip_compre
 
     # set chunk size for data matrix
     elem_per_kb = calculate_elem_per_kb(max_chunk_kb, matrix_dtype)
-    chunk_size = set_data_matrix_chunk_size(gctoo_object.data_df.shape, max_chunk_kb, elem_per_kb)
+    chunk_size = set_data_matrix_chunk_size(gctoo_object.meth_df.shape, max_chunk_kb, elem_per_kb)
 
     # write data matrix
-    hdf5_out.create_dataset(data_matrix_node, data=gctoo_object.data_df.transpose().values,
+    # create merged array
+    merged_array = numpy.array([gctoo_object.meth_df.transpose().values,gctoo_object.cov_df.transpose().values])
+    hdf5_out.create_dataset(data_matrix_node, data=merged_array,
         dtype=matrix_dtype)
 
     # write col metadata
@@ -140,7 +142,7 @@ def set_data_matrix_chunk_size(df_shape, max_chunk_kb, elem_per_kb):
     col_chunk_size = min(((max_chunk_kb*elem_per_kb)//row_chunk_size), df_shape[1])
     return (row_chunk_size, col_chunk_size)
 
-def write_metadata(hdf5_out, dim, metadata_df, convert_back_to_neg_666, gzip_compression):
+def write_metadata(hdf5_out, dim, metadata_df, convert_back_to_neg_666=False, gzip_compression=0):
     """
 	Writes either column or row metadata to proper node of gctx out (hdf5) file.
 

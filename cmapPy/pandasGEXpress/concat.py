@@ -44,6 +44,7 @@ import cmapPy.pandasGEXpress.parse as parse
 import cmapPy.pandasGEXpress.write_gct as write_gct
 import cmapPy.pandasGEXpress.write_gctx as write_gctx
 
+sys.exit('CONCAT NOT IMPLEMENTED FOR METHYLATION MATRICES YET')
 
 __author__ = "Lev Litichevskiy"
 __email__ = "lev@broadinstitute.org"
@@ -219,7 +220,7 @@ def hstack(gctoos, remove_all_metadata_fields=False, error_report_file=None, fie
     logger.info("Build GCToo of all...")
     concated = GCToo.GCToo(row_metadata_df=all_row_metadata_df,
                            col_metadata_df=all_col_metadata_df,
-                           data_df=all_data_df)
+                           meth_df=all_data_df)
 
     return concated
 
@@ -271,7 +272,7 @@ def vstack(gctoos, remove_all_metadata_fields=False, error_report_file=None, fie
     logger.info("Build GCToo of all...")
     concated = GCToo.GCToo(row_metadata_df=all_row_metadata_df,
                            col_metadata_df=all_col_metadata_df,
-                           data_df=all_data_df)
+                           meth_df=all_data_df)
 
     return concated
 

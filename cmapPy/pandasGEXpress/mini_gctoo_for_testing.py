@@ -16,8 +16,9 @@ __email__ = 'oana@broadinstitute.org'
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
+import sys
 
-def make(convert_neg_666=True):
+def make(convert_neg_666=False):
     """
     Creates a small GCToo instance (with representative examples of typically found fields); can use for testing.
     """
@@ -82,12 +83,12 @@ def make(convert_neg_666=True):
     mini_col_metadata.index.name = "cid"
     mini_col_metadata_df.columns.name = "chd"
 
-    mini_data_df = mini_data_mat
-    mini_data_df.index.name = "rid"
-    mini_data_df.columns.name = "cid"
+    mini_meth_df = mini_data_mat
+    mini_meth_df.index.name = "rid"
+    mini_meth_df.columns.name = "cid"
 
     logger.debug("Making mini_gctoo instance...")
-    mini_gctoo = GCToo.GCToo(data_df=mini_data_df, row_metadata_df=mini_row_metadata_df,
+    mini_gctoo = GCToo.GCToo(meth_df=mini_meth_df, cov_df=mini_meth_df, row_metadata_df=mini_row_metadata_df,
                              col_metadata_df=mini_col_metadata_df, src=mini_src, version=mini_version)
 
     return mini_gctoo

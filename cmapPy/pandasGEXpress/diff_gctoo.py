@@ -14,6 +14,8 @@ import cmapPy.pandasGEXpress.GCToo as GCToo
 
 possible_diff_methods = ["robust_z", "median_norm"]
 
+import sys
+sys.exit('DIFF_GCTOO NOT IMPLEMENTED FOR METHYLATION MATRICES YET')
 
 def diff_gctoo(gctoo, plate_control=True, group_field='pert_type', group_val='ctl_vehicle',
                diff_method="robust_z", upper_diff_thresh=10, lower_diff_thresh=-10):
@@ -77,7 +79,7 @@ def diff_gctoo(gctoo, plate_control=True, group_field='pert_type', group_val='ct
     diff_data = diff_data.clip(lower=lower_diff_thresh, upper=upper_diff_thresh)
 
     # Construct output GCToo object
-    out_gctoo = GCToo.GCToo(data_df=diff_data,
+    out_gctoo = GCToo.GCToo(meth_df=diff_data,
                             row_metadata_df=gctoo.row_metadata_df,
                             col_metadata_df=gctoo.col_metadata_df)
 

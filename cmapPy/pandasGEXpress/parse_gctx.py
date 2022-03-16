@@ -20,7 +20,7 @@ row_meta_group_node = "/0/META/ROW"
 col_meta_group_node = "/0/META/COL"
 
 
-def parse(gctx_file_path, convert_neg_666=True, rid=None, cid=None,
+def parse(gctx_file_path, convert_neg_666=False, rid=None, cid=None,
           ridx=None, cidx=None, row_meta_only=False, col_meta_only=False, make_multiindex=False,
           sort_col_meta = True, sort_row_meta = True):
     """
@@ -124,7 +124,9 @@ def parse(gctx_file_path, convert_neg_666=True, rid=None, cid=None,
                                                                 sort_row_meta = True, sort_col_meta = True)
 
         data_dset = gctx_file[data_node]
-        data_df = parse_data_df(data_dset, sorted_ridx, sorted_cidx, row_meta, col_meta)
+        data_df_list = parse_data_df(data_dset, sorted_ridx, sorted_cidx, row_meta, col_meta)
+        meth_df = data_df_list[0]
+        cov_df = data_df_list[1]
 
         # (if subsetting) subset metadata
         row_meta = row_meta.iloc[sorted_ridx]
@@ -135,13 +137,15 @@ def parse(gctx_file_path, convert_neg_666=True, rid=None, cid=None,
             (_, unsorted_cidx) = check_and_order_id_inputs(rid, ridx, cid, cidx, row_meta, col_meta, 
                                                         sort_row_meta, sort_col_meta)
             
-            data_df = data_df.iloc[:,unsorted_cidx]
+            meth_df = meth_df.iloc[:,unsorted_cidx]
+            cov_df = cov_df.iloc[:,unsorted_cidx]
             col_meta = col_meta.iloc[unsorted_cidx,:]
         
         if not sort_row_meta:
             (unsorted_ridx, _) = check_and_order_id_inputs(rid, ridx, cid, cidx, row_meta, col_meta,
                                                       sort_row_meta, sort_row_meta)
-            data_df = data_df.iloc[unsorted_ridx,:]
+            meth_df = meth_df.iloc[unsorted_ridx,:]
+            cov_df = cov_df.iloc[unsorted_ridx,:]
             row_meta = row_meta.iloc[unsorted_ridx,:]
 
         # get version
@@ -152,7 +156,7 @@ def parse(gctx_file_path, convert_neg_666=True, rid=None, cid=None,
         gctx_file.close()
 
         # make GCToo instance
-        my_gctoo = GCToo.GCToo(data_df=data_df, row_metadata_df=row_meta, col_metadata_df=col_meta,
+        my_gctoo = GCToo.GCToo(meth_df=meth_df, cov_df=cov_df, row_metadata_df=row_meta, col_metadata_df=col_meta,
                                src=full_path, version=my_version, make_multiindex=make_multiindex)
         return my_gctoo
 
@@ -374,7 +378,8 @@ def parse_data_df(data_dset, ridx, cidx, row_meta, col_meta):
     if len(ridx) == total_rows and len(cidx) == total_cols:  # no subset
         data_array = np.empty(data_dset.shape, dtype=np.float32)
         data_dset.read_direct(data_array)
-        data_array = data_array.transpose()
+        meth_array = data_array[0, :, :].transpose()
+        cov_array = data_array[1, :, :].transpose()
     else:
         # We can only subset on a single dimension at a time with h5py.
         # For the first dimension to use, pick the one that minimizes
@@ -383,15 +388,21 @@ def parse_data_df(data_dset, ridx, cidx, row_meta, col_meta):
         col_first_count = total_rows * len(cidx)
 
         if row_first_count < col_first_count:
-            first_subset = data_dset[:, ridx].astype(np.float32)
-            data_array = first_subset[cidx, :].transpose()
+            first_subset_meth = data_dset[0, :, ridx].astype(np.float32)
+            first_subset_cov = data_dset[1, :, ridx].astype(np.float32)
+            meth_array = first_subset_meth[cidx, :].transpose()
+            cov_array = first_subset_cov[cidx, :].transpose()
         else:
-            first_subset = data_dset[cidx, :].astype(np.float32)
-            data_array = first_subset[:, ridx].transpose()
+            first_subset_meth = data_dset[0, cidx, :].astype(np.float32)
+            first_subset_cov = data_dset[1, cidx, :].astype(np.float32)
+            meth_array = first_subset_meth[:, ridx].transpose()
+            cov_array = first_subset_cov[:, ridx].transpose()
 
     # make DataFrame instance
-    data_df = pd.DataFrame(data_array, index=row_meta.index[ridx], columns=col_meta.index[cidx])
-    return data_df
+    meth_df = pd.DataFrame(meth_array, index=row_meta.index[ridx], columns=col_meta.index[cidx])
+    cov_df = pd.DataFrame(cov_array, index=row_meta.index[ridx], columns=col_meta.index[cidx])
+
+    return [meth_df, cov_df]
 
 
 def get_column_metadata(gctx_file_path, convert_neg_666=True):

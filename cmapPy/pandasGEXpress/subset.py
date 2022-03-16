@@ -68,7 +68,7 @@ def subset_main(args):
 
     # If GCT, use subset_gctoo
     if args.in_path.endswith(".gct"):
-
+        sys.exit('DOES NOT FUNCTION WITH GCT FILES ANYMORE')
         in_gct = parse_gct.parse(args.in_path)
         out_gct = sg.subset_gctoo(in_gct, rid=rid, cid=cid,
                                  exclude_rid=exclude_rid,
@@ -88,6 +88,7 @@ def subset_main(args):
     if args.out_type == "gctx":
         wgx.write(out_gct, args.out_name)
     else:
+        sys.exit('GCT files not supported')
         wg.write(out_gct, args.out_name, data_null="NaN", metadata_null="NA", filler_null="NA")
 
 

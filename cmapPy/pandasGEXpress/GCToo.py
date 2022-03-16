@@ -51,11 +51,10 @@ __email__ = 'dlahr@broadinstitute.org'
 
 class GCToo(object):
     """Class representing parsed gct(x) objects as pandas dataframes.
-    Contains 3 component dataframes (row_metadata_df, column_metadata_df,
-    and data_df) as well as an assembly of these 3 into a multi index df
-    that provides an alternate way of selecting data.
+    Contains 4 component dataframes (row_metadata_df, column_metadata_df,
+    meth_df and cov_df).
     """
-    def __init__(self, data_df, row_metadata_df=None, col_metadata_df=None,
+    def __init__(self, meth_df, cov_df, row_metadata_df=None, col_metadata_df=None,
                  src=None, version=None, make_multiindex=False, logger_name=setup_logger.LOGGER_NAME):
 
         self.logger = logging.getLogger(logger_name)
@@ -64,17 +63,19 @@ class GCToo(object):
         self.version = version
 
         # Check data_df before setting
-        self.check_df(data_df)
-        self.data_df = data_df
-
+        self.check_df(meth_df)
+        self.check_df(cov_df)
+        self.meth_df = meth_df
+        self.cov_df = cov_df
+        
         if row_metadata_df is None:
-            self.row_metadata_df = pd.DataFrame(index=data_df.index)
+            self.row_metadata_df = pd.DataFrame(index=meth_df.index)
         else:
             # Lots of checks will occur when this attribute is set (see __setattr__ below)
             self.row_metadata_df = row_metadata_df
 
         if col_metadata_df is None:
-            self.col_metadata_df = pd.DataFrame(index=data_df.columns)
+            self.col_metadata_df = pd.DataFrame(index=meth_df.columns)
         else:
             # Lots of checks will occur when this attribute is set (see __setattr__ below)
             self.col_metadata_df = col_metadata_df
@@ -83,27 +84,37 @@ class GCToo(object):
         if make_multiindex:
             self.assemble_multi_index_df()
         else:
-            self.multi_index_df = None
+            self.multi_index_meth_df = None
+            self.multi_index_cov_df = None
 
         # This GCToo object is now initialized
         self._initialized = True
 
     def __setattr__(self, name, value):
-        # Make sure row/col metadata agree with data_df before setting
+        # Make sure row/col metadata agree with meth_df and cov_df before setting
         if name in ["row_metadata_df", "col_metadata_df"]:
             self.check_df(value)
             if name == "row_metadata_df":
-                self.id_match_check(self.data_df, value, "row")
-                value = value.reindex(self.data_df.index)
+                self.id_match_check(self.meth_df, value, "row")
+                self.id_match_check(self.cov_df, value, "row")
+                value = value.reindex(self.meth_df.index)
                 super(GCToo, self).__setattr__(name, value)
             else:
-                self.id_match_check(self.data_df, value, "col")
-                value = value.reindex(self.data_df.columns)
+                self.id_match_check(self.meth_df, value, "col")
+                self.id_match_check(self.cov_df, value, "col")
+                value = value.reindex(self.meth_df.columns)
                 super(GCToo, self).__setattr__(name, value)
 
-        # When reassigning data_df after initialization, reindex row/col metadata if necessary
+        # When reassigning meth_df or cov_df after initialization, reindex row/col metadata if necessary
         # N.B. Need to check if _initialized is present before checking if it's true, or code will break
-        elif name == "data_df" and "_initialized" in self.__dict__ and self._initialized:
+        elif name == "meth_df" and "_initialized" in self.__dict__ and self._initialized:
+            self.id_match_check(value, self.row_metadata_df, "row")
+            self.id_match_check(value, self.col_metadata_df, "col")
+            super(GCToo, self).__setattr__("row_metadata_df", self.row_metadata_df.reindex(value.index))
+            super(GCToo, self).__setattr__("col_metadata_df", self.col_metadata_df.reindex(value.columns))
+            super(GCToo, self).__setattr__(name, value)
+            
+        elif name == "cov_df" and "_initialized" in self.__dict__ and self._initialized:
             self.id_match_check(value, self.row_metadata_df, "row")
             self.id_match_check(value, self.col_metadata_df, "col")
             super(GCToo, self).__setattr__("row_metadata_df", self.row_metadata_df.reindex(value.index))
@@ -111,8 +122,8 @@ class GCToo(object):
             super(GCToo, self).__setattr__(name, value)
 
         # Can't reassign multi_index_df after initialization
-        elif name == "multi_index_df" and "_initialized" in self.__dict__ and self._initialized:
-            msg = ("Cannot reassign value of multi_index_df attribute; "  +
+        elif name in ["multi_index_meth_df", "multi_index_cov_df"] and "_initialized" in self.__dict__ and self._initialized:
+            msg = ("Cannot reassign value of " + name + " attribute; "  +
                 "if you'd like a new multiindex df, please create a new GCToo instance" +
                 "with appropriate data_df, row_metadata_df, and col_metadata_df fields.")
             self.logger.error(msg)
@@ -173,8 +184,10 @@ class GCToo(object):
         source = "src: {}\n".format(self.src)
 
 
-        data = "data_df: [{} rows x {} columns]\n".format(
-        self.data_df.shape[0], self.data_df.shape[1])
+        data1 = "meth_df: [{} rows x {} columns]\n".format(
+        self.meth_df.shape[0], self.meth_df.shape[1])
+        data2 = "cov_df: [{} rows x {} columns]\n".format(
+        self.cov_df.shape[0], self.cov_df.shape[1])
 
         row_meta = "row_metadata_df: [{} rows x {} columns]\n".format(
         self.row_metadata_df.shape[0], self.row_metadata_df.shape[1])
@@ -182,7 +195,7 @@ class GCToo(object):
         col_meta = "col_metadata_df: [{} rows x {} columns]".format(
         self.col_metadata_df.shape[0], self.col_metadata_df.shape[1])
 
-        full_string = (version + source + data + row_meta + col_meta)
+        full_string = (version + source + data1 + data2 + row_meta + col_meta)
         return full_string
 
     def assemble_multi_index_df(self):
@@ -215,8 +228,9 @@ class GCToo(object):
         col_index = pd.MultiIndex.from_arrays(transposed_col_metadata.values, names=transposed_col_metadata.index)
 
         # Create multi index dataframe using the values of data_df and the indexes created above
-        self.logger.debug("Data df shape: {}".format(self.data_df.shape))
-        self.multi_index_df = pd.DataFrame(data=self.data_df.values, index=row_index, columns=col_index)
+        self.logger.debug("Data df shape: {}".format(self.meth_df.shape))
+        self.multi_index_meth_df = pd.DataFrame(data=self.meth_df.values, index=row_index, columns=col_index)
+        self.multi_index_cov_df = pd.DataFrame(data=self.cov_df.values, index=row_index, columns=col_index)
 
 
 def multi_index_df_to_component_dfs(multi_index_df, rid="rid", cid="cid"):

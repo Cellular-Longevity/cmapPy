@@ -8,7 +8,8 @@ import cmapPy.pandasGEXpress.subset as sg
 
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
-
+import sys
+sys.exit('This functions only for GCT files and has been deprecated')
 class TestSubset(unittest.TestCase):
 
     def test_read_arg(self):
@@ -43,7 +44,7 @@ class TestSubset(unittest.TestCase):
         out_gct = parse.parse(out_name)
         expected_gct = parse.parse(expected_out_path)
 
-        pd.util.testing.assert_frame_equal(out_gct.data_df, expected_gct.data_df)
+        pd.util.testing.assert_frame_equal(out_gct.meth_df, expected_gct._df)
         pd.util.testing.assert_frame_equal(out_gct.row_metadata_df, expected_gct.row_metadata_df)
         pd.util.testing.assert_frame_equal(out_gct.col_metadata_df, expected_gct.col_metadata_df)
 
