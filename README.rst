@@ -21,6 +21,26 @@ Documentation: `<https://clue.io/cmapPy/index.html>`_
 
 For questions/problems, please add an issue (that includes code/files that reproduce your problem) to the repository. 
 
+Installation (Python 3)
+====================
+
+.. code-block::
+
+   conda create -n cmapPy3 python=3 scikit-learn scipy numpy seaborn matplotlib statsmodels pandas jupyter sympy h5py jupyter-lab boto3
+
+   git clone https://github.com/Cellular-Longevity/cmapPy
+
+   cd cmapPy
+
+   conda activate cmapPy3
+
+   python setup.py install
+   
+   conda install -c conda-forge jupyterlab
+   
+   
+
+
 Contributing
 ====================
 

@@ -7,3 +7,11 @@ cmapPy.egg-info/
 docs/build
 .DS_Store
 *-checkpoint.ipynb
+
+*.gz
+*.gct
+*.gctx
+.ipynb_checkpoints
+build/*
+dist/*
+*.csv
