@@ -9,12 +9,54 @@ import pandas as pd
 
 logger = logging.getLogger()
 
+# 
+# def _add_row_percentages(s):
+#     '''Convert all columns except for "Total" to a string
+#     that shows the integer count as well as the percentage
+#     of Total within the row.'''
+#     s = s + 0
+#     index = s.index
+#     assert "Total" in index
+#     total = s['Total']
+#     for label, x in s.iteritems():
+#         if label == "Total":
+#             continue
+#         s[label] = r'<span style="width:50%;float: left;text-align:right">{:,d} </span>\
+#         <span style="font-size:1em;color:#888888;width:50%;text-align:left;float: right;padding-left:1em">({:.0%})</span>'.format(int(x), float(x) / total)
+#     return s
 
+
+<<<<<<< HEAD
+=======
+def _add_row_percentages(s):
+    '''Convert all columns except for "Total" to a string
+    that shows the integer count as well as the percentage
+    of Total within the row.'''
+    s = s + 0
+    index = s.index
+    assert "Total" in index
+    total = s['Total']
+    for label, x in s.iteritems():
+        if label == "Total":
+            continue
+        
+        if total == 0:
+            count, pct = 0, 0
+        else:
+            count, pct = int(x), float(x) / total
+        s[label] = '''<span style="width:50%;float: left;text-align:right">{:,d} </span>
+        <span style="font-size:1em;color:#888888;width:50%;text-align:left;float: right;padding-left:1em">
+        ({:.0%})</span>'''.format(count, pct )
+    return s
+
+
+>>>>>>> 05e5e9cff5bc1c32bfe0514ae55f098c63829c50
 def cohort_view_table(df,
                       category_label="category_label",
                       category_order="category_order",
                       flags=[],
                       flag_display_labels=[],
+                      category_metadata=None,
                      add_percentages=True):
 
     ''' Generate a DataFrame showing counts and percentages
@@ -36,13 +78,24 @@ def cohort_view_table(df,
     as columns of the output table.
     @kwarg flag_display_labels: string labels for output columns
     corresonding to flags
+    @kwarg category_metadata: (Optional) dataframe with the
+    caterogy_order and category_label of all buckets that
+    need to be displayed. If provided, all buckets specified 
+    by this table will be displayed as rows in the final table,
+    even if df contains no entries from those buckets. 
     @kwarg add_percentages: whether to display percentages 
     alongside the counts.
     '''
+    assert "Total" not in df.columns, "df cannot contain a 'Total' column. Please rename."
     assert len(flags) == len(flag_display_labels), '"flags" and "flag_display_labels" should have the same length'
-    
-    df['Total'] = 1
     columns = ['Total'] + flags 
+    df['Total'] = 1
+    if category_metadata is not None:
+        df_metadata = category_metadata.copy()
+        for column in columns:
+            df_metadata[column] = 0
+        df = pd.concat([df_metadata, df], axis=0)
+
     df = (
         df
         .groupby([category_order, category_label])[columns]
@@ -51,6 +104,8 @@ def cohort_view_table(df,
         .reset_index(level=[category_order])
         .drop(columns=category_order)
     )
+    df = df[columns]
+    
 
     column_names = ["Total"] + flag_display_labels 
     df.columns = column_names
@@ -84,6 +139,7 @@ def _fmt_total_percentages(x, total):
     return s
 
 
+<<<<<<< HEAD
 def _add_row_percentages(s):
     '''Convert all columns except for "Total" to a string
     that shows the integer count as well as the percentage
@@ -99,6 +155,46 @@ def _add_row_percentages(s):
         <span style="font-size:1em;color:#888888;width:50%;text-align:left;float: right;padding-left:1em">
         ({:.0%})</span>'''.format(int(x), float(x) / total)
     return s
+=======
+# 
+# def cohort_view_table(df,
+#                       category_label="category_label",
+#                       category_order="category_order",
+#                       flags=[],
+#                       flag_display_labels=[],
+#                      add_percentages=True):
+# 
+#     
+#     df['Total'] = 1
+#     columns = ['Total'] + flags 
+#     df = (
+#         df
+#         .groupby([category_order, category_label])[columns]
+#         .sum()
+#         .sort_index(axis=0, level=category_order)
+#         .reset_index(level=[category_order])
+#         .drop(columns=category_order)
+#     )
+# 
+#     column_names = ["Total"] +  flag_display_labels 
+#     df.columns  = column_names
+#     df.index.names=['Category'] 
+# 
+#     df = df.T
+#     num_categories = len(df.columns)
+#     print "num_categories: {}".format(num_categories)
+# 
+#     # Test comopound fields
+#     cpd_columns = [c for c in df.columns if 'Test subset' in c]
+#     df['Test Compounds Total'] = df[cpd_columns].sum(1)
+#     df['Grand Total'] = df.iloc[:,:num_categories].sum(1)
+#     df = df.T
+#     df.index.name=None
+#     
+#     if add_percentages:
+#         df = df.transform(_add_row_percentages, axis=1)
+#     return df
+>>>>>>> 05e5e9cff5bc1c32bfe0514ae55f098c63829c50
 
 
 def display_cohort_stats_table(table, barplot_column):
