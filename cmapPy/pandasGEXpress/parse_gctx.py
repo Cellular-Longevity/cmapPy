@@ -127,6 +127,8 @@ def parse(gctx_file_path, convert_neg_666=False, rid=None, cid=None,
         data_df_list = parse_data_df(data_dset, sorted_ridx, sorted_cidx, row_meta, col_meta)
         meth_df = data_df_list[0]
         cov_df = data_df_list[1]
+        assert np.nanmax(meth_df) <= 100. , 'it looks like methylation is >100% ?'
+        assert all(x.is_integer() for x in cov_df.fillna(0).stack().values), 'coverage matrix failed integer check'
 
         # (if subsetting) subset metadata
         row_meta = row_meta.iloc[sorted_ridx]
