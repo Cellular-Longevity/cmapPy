@@ -44,7 +44,7 @@ import cmapPy.pandasGEXpress.parse as parse
 import cmapPy.pandasGEXpress.write_gct as write_gct
 import cmapPy.pandasGEXpress.write_gctx as write_gctx
 
-sys.exit('CONCAT NOT IMPLEMENTED FOR METHYLATION MATRICES YET')
+# sys.exit('CONCAT NOT IMPLEMENTED FOR METHYLATION MATRICES YET')
 
 __author__ = "Lev Litichevskiy"
 __email__ = "lev@broadinstitute.org"
@@ -189,12 +189,14 @@ def hstack(gctoos, remove_all_metadata_fields=False, error_report_file=None, fie
     # Separate each gctoo into its component dfs
     row_meta_dfs = []
     col_meta_dfs = []
-    data_dfs = []
+    meth_dfs = []
+    cov_dfs = []
     srcs = []
     for g in gctoos:
         row_meta_dfs.append(g.row_metadata_df)
         col_meta_dfs.append(g.col_metadata_df)
-        data_dfs.append(g.data_df)
+        meth_dfs.append(g.meth_df)
+        cov_dfs.append(g.cov_df)
         srcs.append(g.src)
 
     logger.debug("shapes of row_meta_dfs:  {}".format([x.shape for x in row_meta_dfs]))
@@ -205,22 +207,26 @@ def hstack(gctoos, remove_all_metadata_fields=False, error_report_file=None, fie
     # Concatenate col metadata
     all_col_metadata_df = assemble_concatenated_meta(col_meta_dfs, remove_all_metadata_fields)
 
-    # Concatenate the data_dfs
-    all_data_df = assemble_data(data_dfs, "horiz")
+    # Concatenate the meth/cov dfs
+    all_meth_df, all_cov_df = assemble_data(meth_dfs, cov_dfs, "horiz")
 
     # Make sure df shapes are correct
-    assert all_data_df.shape[0] == all_row_metadata_df.shape[0], "Number of rows in metadata does not match number of rows in data - all_data_df.shape[0]:  {}  all_row_metadata_df.shape[0]:  {}".format(all_data_df.shape[0], all_row_metadata_df.shape[0])
-    assert all_data_df.shape[1] == all_col_metadata_df.shape[0], "Number of columns in data does not match number of columns metadata - all_data_df.shape[1]:  {}  all_col_metadata_df.shape[0]:  {}".format(all_data_df.shape[1], all_col_metadata_df.shape[0])
+    assert all_meth_df.shape[0] == all_row_metadata_df.shape[0], "Number of rows in metadata does not match number of rows in data - all_data_df.shape[0]:  {}  all_row_metadata_df.shape[0]:  {}".format(all_meth_df.shape[0], all_row_metadata_df.shape[0])
+    assert all_meth_df.shape[1] == all_col_metadata_df.shape[0], "Number of columns in data does not match number of columns metadata - all_data_df.shape[1]:  {}  all_col_metadata_df.shape[0]:  {}".format(all_meth_df.shape[1], all_col_metadata_df.shape[0])
+
+    assert all_cov_df.shape[0] == all_row_metadata_df.shape[0], "Number of rows in metadata does not match number of rows in data - all_data_df.shape[0]:  {}  all_row_metadata_df.shape[0]:  {}".format(all_cov_df.shape[0], all_row_metadata_df.shape[0])
+    assert all_cov_df.shape[1] == all_col_metadata_df.shape[0], "Number of columns in data does not match number of columns metadata - all_data_df.shape[1]:  {}  all_col_metadata_df.shape[0]:  {}".format(all_cov_df.shape[1], all_col_metadata_df.shape[0])
     
     # If requested, reset sample ids to be unique integers and move old sample
     # ids into column metadata
     if reset_ids:
-        do_reset_ids(all_col_metadata_df, all_data_df, "horiz")
+        do_reset_ids(all_col_metadata_df, all_meth_df, "horiz")
+        do_reset_ids(all_col_metadata_df, all_cov_df, "horiz")
 
     logger.info("Build GCToo of all...")
     concated = GCToo.GCToo(row_metadata_df=all_row_metadata_df,
                            col_metadata_df=all_col_metadata_df,
-                           meth_df=all_data_df)
+                           meth_df=all_meth_df,cov_df=all_cov_df)
 
     return concated
 
@@ -243,12 +249,14 @@ def vstack(gctoos, remove_all_metadata_fields=False, error_report_file=None, fie
     # Separate each gctoo into its component dfs
     row_meta_dfs = []
     col_meta_dfs = []
-    data_dfs = []
+    meth_dfs = []
+    cov_dfs = []
     srcs = []
     for g in gctoos:
         row_meta_dfs.append(g.row_metadata_df)
         col_meta_dfs.append(g.col_metadata_df)
-        data_dfs.append(g.data_df)
+        meth_dfs.append(g.meth_df)
+        cov_dfs.append(g.cov_df)
         srcs.append(g.src)
 
     # Concatenate col metadata
@@ -257,22 +265,26 @@ def vstack(gctoos, remove_all_metadata_fields=False, error_report_file=None, fie
     # Concatenate col metadata
     all_row_metadata_df = assemble_concatenated_meta(row_meta_dfs, remove_all_metadata_fields)
 
-    # Concatenate the data_dfs
-    all_data_df = assemble_data(data_dfs, "vert")
+    # Concatenate the meth_dfs
+    all_meth_df, all_cov_df = assemble_data(meth_dfs, cov_dfs, "vert")
 
     # Make sure df shapes are correct
-    assert all_data_df.shape[0] == all_row_metadata_df.shape[0], "Number of rows is incorrect."
-    assert all_data_df.shape[1] == all_col_metadata_df.shape[0], "Number of columns is incorrect."
+    assert all_meth_df.shape[0] == all_row_metadata_df.shape[0], "Number of rows is incorrect."
+    assert all_meth_df.shape[1] == all_col_metadata_df.shape[0], "Number of columns is incorrect."
+
+    assert all_cov_df.shape[0] == all_row_metadata_df.shape[0], "Number of rows is incorrect."
+    assert all_cov_df.shape[1] == all_col_metadata_df.shape[0], "Number of columns is incorrect."
 
     # If requested, reset sample ids to be unique integers and move old sample
     # ids into column metadata
     if reset_ids:
-        do_reset_ids(all_row_metadata_df, all_data_df, "vert")
+        do_reset_ids(all_row_metadata_df, all_meth_df, "vert")
+        do_reset_ids(all_row_metadata_df, all_cov_df, "vert")
 
     logger.info("Build GCToo of all...")
     concated = GCToo.GCToo(row_metadata_df=all_row_metadata_df,
                            col_metadata_df=all_col_metadata_df,
-                           meth_df=all_data_df)
+                           meth_df=all_meth_df,cov_df=all_cov_df)
 
     return concated
 
@@ -453,47 +465,66 @@ def assemble_concatenated_meta(concated_meta_dfs, remove_all_metadata_fields):
     return all_concated_meta_df_sorted
 
 
-def assemble_data(data_dfs, concat_direction):
+def assemble_data(meth_dfs,cov_dfs, concat_direction):
     """ Assemble the data dfs together. Both indices are sorted.
 
     Args:
-        data_dfs (list of pandas dfs)
+        meth_dfs (list of pandas dfs)
+        cov_dfs (list of pandas dfs)
         concat_direction (string): 'horiz' or 'vert'
 
     Returns:
-        all_data_df_sorted (pandas df)
+        all_meth_df_sorted (pandas df)
+        all_cov_df_sorted (pandas df)
 
     """
     if concat_direction == "horiz":
-        # Concatenate the data_dfs horizontally
-        all_data_df = pd.concat(data_dfs, axis=1)
+        # Concatenate the meth_dfs horizontally
+        all_meth_df = pd.concat(meth_dfs, axis=1)
+        all_cov_df = pd.concat(cov_dfs, axis=1)
 
-        # Sanity check: the number of columns in all_data_df should
+        # Sanity check: the number of columns in all_meth_df should
         # correspond to the sum of the number of columns in the input dfs
-        n_cols = all_data_df.shape[1]
+        n_cols = all_meth_df.shape[1]
         logger.debug("all_data_df.shape[1]: {}".format(n_cols))
-        n_cols_cumulative = sum([df.shape[1] for df in data_dfs])
+        n_cols_cumulative = sum([df.shape[1] for df in meth_dfs])
+        assert n_cols == n_cols_cumulative
+
+        # Sanity check: the number of columns in all_cov_df should
+        # correspond to the sum of the number of columns in the input dfs
+        n_cols = all_cov_df.shape[1]
+        logger.debug("all_data_df.shape[1]: {}".format(n_cols))
+        n_cols_cumulative = sum([df.shape[1] for df in cov_dfs])
         assert n_cols == n_cols_cumulative
 
     elif concat_direction == "vert":
 
-        # Concatenate the data_dfs vertically
-        all_data_df = pd.concat(data_dfs, axis=0)
+        # Concatenate the meth_dfs vertically
+        all_meth_df = pd.concat(meth_dfs, axis=0)
+        all_cov_df = pd.concat(cov_dfs, axis=0)
 
         # Sanity check: the number of rows in all_data_df should
         # correspond to the sum of the number of rows in the input dfs
-        n_rows = all_data_df.shape[0]
+        n_rows = all_meth_df.shape[0]
         logger.debug("all_data_df.shape[0]: {}".format(n_rows))
-        n_rows_cumulative = sum([df.shape[0] for df in data_dfs])
+        n_rows_cumulative = sum([df.shape[0] for df in meth_dfs])
+        assert n_rows == n_rows_cumulative
+
+        # Sanity check: the number of rows in all_data_df should
+        # correspond to the sum of the number of rows in the input dfs
+        n_rows = all_cov_df.shape[0]
+        logger.debug("all_data_df.shape[0]: {}".format(n_rows))
+        n_rows_cumulative = sum([df.shape[0] for df in cov_dfs])
         assert n_rows == n_rows_cumulative
 
     # Sort both indices
-    all_data_df_sorted = all_data_df.sort_index(axis=0).sort_index(axis=1)
+    all_meth_df_sorted = all_meth_df.sort_index(axis=0).sort_index(axis=1)
+    all_cov_df_sorted = all_cov_df.sort_index(axis=0).sort_index(axis=1)
 
-    return all_data_df_sorted
+    return all_meth_df_sorted, all_cov_df_sorted
 
 
-def do_reset_ids(concatenated_meta_df, data_df, concat_direction):
+def do_reset_ids(concatenated_meta_df, meth_df, cov_df, concat_direction):
     """ Reset ids in concatenated metadata and data dfs to unique integers and
     save the old ids in a metadata column.
 
@@ -501,7 +532,8 @@ def do_reset_ids(concatenated_meta_df, data_df, concat_direction):
 
     Args:
         concatenated_meta_df (pandas df)
-        data_df (pandas df)
+        meth_df (pandas df)
+        cov_df (pandas df)
         concat_direction (string): 'horiz' or 'vert'
 
     Returns:
@@ -511,28 +543,32 @@ def do_reset_ids(concatenated_meta_df, data_df, concat_direction):
     if concat_direction == "horiz":
 
         # Make sure cids agree between data_df and concatenated_meta_df
-        assert concatenated_meta_df.index.equals(data_df.columns), (
+        assert concatenated_meta_df.index.equals(meth_df.columns), (
             "cids in concatenated_meta_df do not agree with cids in data_df.")
-
+        assert concatenated_meta_df.index.equals(cov_df.columns), (
+            "cids in concatenated_meta_df do not agree with cids in data_df.")
         # Reset cids in concatenated_meta_df
         reset_ids_in_meta_df(concatenated_meta_df)
 
         # Replace cids in data_df with the new ones from concatenated_meta_df
         # (just an array of unique integers, zero-indexed)
-        data_df.columns = pd.Index(concatenated_meta_df.index.values)
+        meth_df.columns = pd.Index(concatenated_meta_df.index.values)
+        cov_df.columns = pd.Index(concatenated_meta_df.index.values)
 
     elif concat_direction == "vert":
 
         # Make sure rids agree between data_df and concatenated_meta_df
-        assert concatenated_meta_df.index.equals(data_df.index), (
+        assert concatenated_meta_df.index.equals(meth_df.index), (
             "rids in concatenated_meta_df do not agree with rids in data_df.")
-
+        assert concatenated_meta_df.index.equals(cov_df.index), (
+            "rids in concatenated_meta_df do not agree with rids in data_df.")
         # Reset rids in concatenated_meta_df
         reset_ids_in_meta_df(concatenated_meta_df)
 
         # Replace rids in data_df with the new ones from concatenated_meta_df
         # (just an array of unique integers, zero-indexed)
-        data_df.index = pd.Index(concatenated_meta_df.index.values)
+        meth_df.index = pd.Index(concatenated_meta_df.index.values)
+        cov_df.index = pd.Index(concatenated_meta_df.index.values)
 
 
 def reset_ids_in_meta_df(meta_df):
