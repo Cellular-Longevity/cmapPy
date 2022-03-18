@@ -19,7 +19,7 @@ def view(filename,printing=True,filter=None):
     df.visititems(h5ls) 
     df.close()
     if printing:
-        [print(name) for name in h5ls.names]
+        [print(name,shape) for name,shape in zip(h5ls.names,h5ls.shapes)]
 
     if filter is not None:
         return [name for name in h5ls.names if filter in name]
@@ -30,8 +30,10 @@ class H5ls:
     def __init__(self):
         # Store an empty list for dataset names
         self.names = []
+        self.shapes = []
 
     def __call__(self, name, h5obj):
         if hasattr(h5obj,'dtype') and not name in self.names:
             self.names += [name]
+            self.shapes.append(h5obj.shape)
 
