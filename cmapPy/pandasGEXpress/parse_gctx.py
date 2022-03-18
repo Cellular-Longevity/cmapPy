@@ -378,23 +378,34 @@ def parse_data_df(data_dset, ridx, cidx, row_meta, col_meta):
     if len(ridx) == total_rows and len(cidx) == total_cols:  # no subset
         data_array = np.empty(data_dset.shape, dtype=np.float32)
         data_dset.read_direct(data_array)
-        meth_array = data_array[0, :, :].transpose()
-        cov_array = data_array[1, :, :].transpose()
+        if data_array.ndim > 2:
+            meth_array = data_array[0, :, :].transpose()
+            cov_array = data_array[1, :, :].transpose()
+        else:
+            meth_array = data_array[:, :].transpose()
+            cov_array = np.empty(data_array.shape, dtype=np.float32).transpose()
     else:
         # We can only subset on a single dimension at a time with h5py.
         # For the first dimension to use, pick the one that minimizes
         # the size of the intermediate array.
         row_first_count = total_cols * len(ridx)
         col_first_count = total_rows * len(cidx)
-
         if row_first_count < col_first_count:
-            first_subset_meth = data_dset[0, :, ridx].astype(np.float32)
-            first_subset_cov = data_dset[1, :, ridx].astype(np.float32)
+            if data_dset.ndim > 2:
+                first_subset_meth = data_dset[0, :, ridx].astype(np.float32)
+                first_subset_cov = data_dset[1, :, ridx].astype(np.float32)
+            else:
+                first_subset_meth = data_dset[:, ridx].astype(np.float32)
+                first_subset_cov = np.empty(data_dset[:, ridx].shape, dtype=np.float32)
             meth_array = first_subset_meth[cidx, :].transpose()
             cov_array = first_subset_cov[cidx, :].transpose()
         else:
-            first_subset_meth = data_dset[0, cidx, :].astype(np.float32)
-            first_subset_cov = data_dset[1, cidx, :].astype(np.float32)
+            if data_dset.ndim > 2:
+                first_subset_meth = data_dset[0, cidx, :].astype(np.float32)
+                first_subset_cov = data_dset[1, cidx, :].astype(np.float32)
+            else:
+                first_subset_meth = data_dset[cidx, :].astype(np.float32)
+                first_subset_cov = np.empty(data_dset[cidx, :].shape, dtype=np.float32)
             meth_array = first_subset_meth[:, ridx].transpose()
             cov_array = first_subset_cov[:, ridx].transpose()
 
