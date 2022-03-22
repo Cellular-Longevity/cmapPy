@@ -82,8 +82,10 @@ setup(
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
     # pip to create the appropriate form of executable for the target platform.
-    entry_points={'console_scripts': ['gctx2gct=cmapPy.pandasGEXpress.gctx2gct:main', 'gct2gctx=cmapPy.pandasGEXpress.gct2gctx:main', 
-        'concat=cmapPy.pandasGEXpress.concat:main', 'subset=cmapPy.pandasGEXpress.subset:main']},
+    entry_points={'console_scripts': ['gctx2gct=cmapPy.pandasGEXpress.gctx2gct:main', 
+        'gct2gctx=cmapPy.pandasGEXpress.gct2gctx:main', 
+        'concat=cmapPy.pandasGEXpress.concat:main', 
+        'subset=cmapPy.pandasGEXpress.subset:main',]},
 
     tests_require=['unittest']
 )
