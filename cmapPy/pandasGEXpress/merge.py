@@ -23,13 +23,12 @@ logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
 
 def merge(gctoos,how='inner'):
-    """ merge gctoos.
+    """ convenience funciton that merges a list of gctx matrices similar to pd.merge(how='inner')
 
     Args:
         gctoos (list of gctoo objects)
         how - only 'inner', expand to outer/left/right in future
 
-        
     Return:
         inner merged (gctoo object)
     """

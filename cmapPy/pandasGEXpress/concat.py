@@ -575,11 +575,10 @@ def reset_ids_in_meta_df(meta_df):
     # Record original index name, and then change it so that the column that it
     # becomes will be appropriately named
     original_index_name = meta_df.index.name
-    # meta_df.index.name = "old_id" # unnecessary renaming 
+    meta_df.index.name = "old_id" # unnecessary renaming 
 
     # Reset index
     meta_df.reset_index(inplace=True)
-
     # Change the index name back to what it was
     meta_df.index.name = original_index_name
 
