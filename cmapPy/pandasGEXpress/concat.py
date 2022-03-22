@@ -220,8 +220,7 @@ def hstack(gctoos, remove_all_metadata_fields=False, error_report_file=None, fie
     # If requested, reset sample ids to be unique integers and move old sample
     # ids into column metadata
     if reset_ids:
-        do_reset_ids(all_col_metadata_df, all_meth_df, "horiz")
-        do_reset_ids(all_col_metadata_df, all_cov_df, "horiz")
+        do_reset_ids(all_col_metadata_df, all_meth_df, all_cov_df, "horiz")
 
     logger.info("Build GCToo of all...")
     concated = GCToo.GCToo(row_metadata_df=all_row_metadata_df,
@@ -278,8 +277,7 @@ def vstack(gctoos, remove_all_metadata_fields=False, error_report_file=None, fie
     # If requested, reset sample ids to be unique integers and move old sample
     # ids into column metadata
     if reset_ids:
-        do_reset_ids(all_row_metadata_df, all_meth_df, "vert")
-        do_reset_ids(all_row_metadata_df, all_cov_df, "vert")
+        do_reset_ids(all_row_metadata_df, all_meth_df, all_cov_df, "vert")
 
     logger.info("Build GCToo of all...")
     concated = GCToo.GCToo(row_metadata_df=all_row_metadata_df,
@@ -503,14 +501,14 @@ def assemble_data(meth_dfs,cov_dfs, concat_direction):
         all_meth_df = pd.concat(meth_dfs, axis=0)
         all_cov_df = pd.concat(cov_dfs, axis=0)
 
-        # Sanity check: the number of rows in all_data_df should
+        # Sanity check: the number of rows in all_meth_df should
         # correspond to the sum of the number of rows in the input dfs
         n_rows = all_meth_df.shape[0]
         logger.debug("all_data_df.shape[0]: {}".format(n_rows))
         n_rows_cumulative = sum([df.shape[0] for df in meth_dfs])
         assert n_rows == n_rows_cumulative
 
-        # Sanity check: the number of rows in all_data_df should
+        # Sanity check: the number of rows in all_cov_df should
         # correspond to the sum of the number of rows in the input dfs
         n_rows = all_cov_df.shape[0]
         logger.debug("all_data_df.shape[0]: {}".format(n_rows))
@@ -577,11 +575,10 @@ def reset_ids_in_meta_df(meta_df):
     # Record original index name, and then change it so that the column that it
     # becomes will be appropriately named
     original_index_name = meta_df.index.name
-    meta_df.index.name = "old_id"
+    meta_df.index.name = "old_id" # unnecessary renaming 
 
     # Reset index
     meta_df.reset_index(inplace=True)
-
     # Change the index name back to what it was
     meta_df.index.name = original_index_name
 
