@@ -23,7 +23,7 @@ session = boto3.Session(profile_name='default')
 s3_client = session.client('s3')
 
 s3_client.download_file(Bucket="bioinformatics-loyal", 
-Key="processed_methylation_data/HEALTHSPAN/novogene_pilot_RRBS/matrices_processed/methylation_filtered.gctx", 
+Key="processed_methylation_data/individual_datasets/novogene_pilot_RRBS/matrices_processed/methylation_filtered.gctx", 
 Filename="methylation_filtered.gctx")
 
 # parse the gctx
