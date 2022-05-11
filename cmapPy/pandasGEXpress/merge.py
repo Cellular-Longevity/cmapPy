@@ -22,7 +22,7 @@ __email__ = "davidtingley2@gmail.com"
 logger = logging.getLogger(setup_logger.LOGGER_NAME)
 
 
-def merge(gctoos,how='inner'):
+def merge(gctoos,how='inner',index_on='id'):
     """ convenience funciton that merges a list of gctx matrices similar to pd.merge(how='inner')
 
     Args:
@@ -33,21 +33,19 @@ def merge(gctoos,how='inner'):
         inner merged (gctoo object)
     """
 
-    idx = set(gctoos[0].row_metadata_df['id'].values)
-    [idx.intersection_update(set(y.row_metadata_df['id'].values)) for y in gctoos[1:]]
+    idx = set(gctoos[0].row_metadata_df[index_on].values)
+    [idx.intersection_update(set(y.row_metadata_df[index_on].values)) for y in gctoos[1:]]
     idx = list(idx)
 
     gsubList = []
 
     for g in gctoos:
-        i, ridx, b = numpy.intersect1d(g.row_metadata_df['id'].values,idx,return_indices=True)
+        i, ridx, b = numpy.intersect1d(g.row_metadata_df[index_on].values,idx,return_indices=True)
         
         gsub = subset_gctoo.subset_gctoo(g,ridx=ridx.tolist())
         # concat.do_reset_ids(gsub.row_metadata_df,gsub.meth_df,gsub.cov_df,'vert')
         gsubList.append(gsub)
-
     gctx = concat.hstack(gsubList)
-
 
     return gctx
 
